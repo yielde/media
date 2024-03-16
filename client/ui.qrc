@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>UI/images/logo-login.png</file>
+        <file>UI/images/logo.png</file>
+        <file>UI/images/headimg-login.png</file>
+        <file>UI/images/close-tanchuang.png</file>
+        <file>UI/images/tanchuangbg.jpg</file>
+    </qresource>
+</RCC>
