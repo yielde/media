@@ -14,9 +14,9 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
         main.cpp
-        widget.cpp
-        widget.h
-        widget.ui
+
+
+
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -28,6 +28,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         infoform.h infoform.cpp infoform.ui
         recordfile.h recordfile.cpp
         ssltool.h ssltool.cpp
+        widget.h widget.cpp widget.ui
+        mediabase.h mediabase.cpp
+        mediamp4.h mediamp4.cpp
+        qmediaplayer.h qmediaplayer.cpp
+        vlchelper.h vlchelper.cpp
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET client APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -47,7 +53,12 @@ else()
     endif()
 endif()
 
-target_link_libraries(client PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+INCLUDE_DIRECTORIES(./include "${PROJECT_SOURCE_DIR}")
+LINK_DIRECTORIES(./lib)
+
+find_package(OpenSSL REQUIRED)
+
+target_link_libraries(client PRIVATE Qt${QT_VERSION_MAJOR}::Widgets OpenSSL::SSL)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
@@ -62,8 +73,8 @@ set_target_properties(client PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
-set(INC_DIR "./include")
-include_directories(${INC_DIR})
+
+
 include(GNUInstallDirs)
 install(TARGETS client
     BUNDLE DESTINATION .

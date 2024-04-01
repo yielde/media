@@ -12,6 +12,7 @@ bool LOGIN_STATUS = false;
 LoginForm::LoginForm(QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::LoginForm)
+    , auto_login_id(-1)
 {
     record = new RecordFile("sec.dat");
     ui->setupUi(this);
@@ -27,8 +28,6 @@ LoginForm::LoginForm(QWidget* parent)
     // connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(slots_login_request_fineshed(QNetworkReply*)));
     info.setWindowFlag(Qt::FramelessWindowHint);
     info.setWindowModality(Qt::ApplicationModal);
-    QSize sz = size();
-    info.move((sz.width() - info.width()) / 2, (sz.height() - info.height()) / 2);
     load_config();
 }
 
@@ -77,8 +76,10 @@ void LoginForm::timerEvent(QTimerEvent* event)
     check_login(user, pwd);
 }
 
-void LoginForm::on_logoButton_released()
+void LoginForm::on_loginButton_released()
 {
+    info.move(this->frameGeometry().x() + (this->width() - info.width()) / 2, // 弹出窗口居中
+        this->frameGeometry().y() + (this->height() - info.height()) / 2);
     if (ui->loginButton->text() == "取消自动登录") {
         killTimer(auto_login_id);
         auto_login_id = -1;
@@ -123,12 +124,7 @@ void LoginForm::load_config()
     QString pwd = root["password"].toString();
     ui->nameEdit->setText(user);
     ui->pwdEdit->setText(pwd);
-
-    qDebug() << "auto: " << root["auto"].toBool();
-    qDebug() << "remember:" << root["remember"].toBool();
     if (root["auto"].toBool()) {
-        qDebug() << "user=" << user;
-        qDebug() << "pwd=" << pwd;
         if (user.size() > 0 && pwd.size() > 0) {
             {
                 ui->loginButton->setText("取消自动登录");
@@ -137,6 +133,7 @@ void LoginForm::load_config()
         }
     }
 }
+
 void LoginForm::slots_login_request_fineshed(QNetworkReply* reply)
 {
     this->setEnabled(true);
@@ -190,6 +187,8 @@ bool LoginForm::check_login(const QString& user, const QString& pwd)
 {
     // TODO:远程登录
     LOGIN_STATUS = true;
+    record->config()["user"] = ui->nameEdit->text();
+    record->config()["password"] = ui->pwdEdit->text();
     emit login(record->config()["user"].toString(), QByteArray());
     hide();
     char tm[64] = "";
@@ -197,7 +196,9 @@ bool LoginForm::check_login(const QString& user, const QString& pwd)
     ::time(&t);
     strftime(tm, sizeof(tm), "%Y-%m-%d %H:%M:%S", localtime(&t));
     record->config()["date"] = QString(tm);
+    qDebug() << record->config();
     record->save();
+
     return false;
 }
 

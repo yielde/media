@@ -112,7 +112,15 @@ background-color: transparent;</string>
     <bool>true</bool>
    </property>
   </widget>
+  <zorder>connectButton</zorder>
+  <zorder>label</zorder>
+  <zorder>textLB</zorder>
+  <zorder>closeButton</zorder>
  </widget>
+ <tabstops>
+  <tabstop>connectButton</tabstop>
+  <tabstop>closeButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

@@ -3,7 +3,7 @@
 #include <QJsonObject>
 #include <QString>
 
-// #include "ssltool.h"
+#include "ssltool.h"
 
 class RecordFile {
 public:
@@ -15,7 +15,7 @@ public:
 private:
     QJsonObject m_config;
     QString m_path;
-    // SslTool tool;
+    SslTool tool;
 };
 
 #endif // RECORDFILE_H

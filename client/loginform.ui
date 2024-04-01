@@ -11,10 +11,10 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string/>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgb(39, 40, 47), stop:1 rgb(63, 65, 76));
+   <string notr="true">background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgb(39, 40, 47), stop:1 rgb(63, 65, 76));
 color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(39, 40, 47, 255), stop:1 rgb(63, 65, 76));</string>
   </property>
   <widget class="QLabel" name="logo">
@@ -237,6 +237,9 @@ QPushButton:pressed{
    <property name="styleSheet">
     <string notr="true">color: rgb(71, 75, 94);
 background-color: transparent;</string>
+   </property>
+   <property name="frame">
+    <bool>true</bool>
    </property>
   </widget>
   <widget class="QLineEdit" name="pwdEdit">

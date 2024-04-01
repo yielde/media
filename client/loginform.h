@@ -20,7 +20,7 @@ public:
     virtual bool eventFilter(QObject* watched, QEvent* event);
     virtual void timerEvent(QTimerEvent* event);
 protected slots:
-    void on_logoButton_released();
+    void on_loginButton_released();
     // void on_rememberPwd_stateChanged(int stat);
     void slots_autoLoginCheck_stateChange(int stat);
     void slots_login_request_fineshed(QNetworkReply* reply);
