@@ -14,20 +14,29 @@
 #include "epoll.h"
 #include "logger.h"
 #include "process.h"
+#include "server.h"
+#include "threadpool.h"
 
 int LogTest() {
-  char buffer[] = "hello galen! 设置";
+  char buffer[] = "galen! new new new say 设置 test\n";
   TRACEI("here is log test: %d %c %f %g %s 你好 %s", 10, 'A', 1.2f, 2.3, buffer,
          "晖晖");
-  DUMPD(buffer, sizeof(buffer));
-  LOGI << 100 << " " << 's' << " " << 0.123f << " " << 2.3 << " " << buffer
-       << "中国";
+  // DUMPD(buffer, sizeof(buffer));
+  // LOGI << 100 << " " << 's' << " " << 0.123f << " " << 2.3 << " " << buffer
+  //      << "中国";
 
   return 0;
 }
 
 int LogTest1() {
-  char buffer[] = "hello hello galen! 设置";
+  char buffer[] = "hello hello galen! 设置 test1 \n";
+  DUMPD(buffer, sizeof(buffer));
+
+  return 0;
+}
+
+int LogTest2() {
+  char buffer[] = "galen! 设置 test2\n";
   DUMPD(buffer, sizeof(buffer));
 
   return 0;
@@ -44,7 +53,7 @@ int createLogServer(CProcess* proc) {
   while (true) {
     proc->recvFD(fd);
     if (fd <= 0) {
-      printf("received fd, %d\n", fd);
+      printf("received fd, %d, will close server!\n", fd);
       break;
     }
   }
@@ -72,24 +81,47 @@ int createClientServer(CProcess* proc) {
 
 int main() {
   printf("start server~\n");
-  CProcess::switchDeamon();
+  // CProcess::switchDeamon();
 
   CProcess proclog;
+  int ret = 0;
   proclog.setEntryFunction(createLogServer, &proclog);
-  int ret = proclog.CreateSubProcess();
+  ret = proclog.CreateSubProcess();
   if (ret != 0) return -1;
   sleep(3);
+
   LogTest1();
   LogTest1();
   LogTest1();
 
+  LOGI << "start thread1";
   CThread thread1(LogTest);
   thread1.Start();
 
-  sleep(20);
-  proclog.sendFD(-1);
-  printf("main process send fd !\n");
+  CThreadPool pool;
+  ret = pool.Start(4);
+  LOGI << "start thread pool" << " ret: " << ret;
+  if (ret != 0)
+    TRACEI("error: ret = %d, error = %d, %s", ret, errno, strerror(errno));
+  ret = pool.AddTask(LogTest2);
+  if (ret != 0)
+    TRACEI("error: ret = %d, error = %d, %s", ret, errno, strerror(errno));
+  ret = pool.AddTask(LogTest2);
+  if (ret != 0)
+    TRACEI("error: ret = %d, error = %d, %s", ret, errno, strerror(errno));
+  ret = pool.AddTask(LogTest2);
+  if (ret != 0)
+    TRACEI("error: ret = %d, error = %d, %s", ret, errno, strerror(errno));
+  ret = pool.AddTask(LogTest2);
+  if (ret != 0)
+    TRACEI("error: ret = %d, error = %d, %s", ret, errno, strerror(errno));
   (void)getchar();
+  // sleep(5);
+  proclog.sendFD(-1);
+  TRACEI("main process send fd !\n");
+  (void)getchar();
+  // sleep(5);
+  printf("over!\n");
   return 0;
 }
 

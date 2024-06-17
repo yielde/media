@@ -1,3 +1,5 @@
+#ifndef _PROCESS_H_
+#define _PROCESS_H_
 #include <fcntl.h>
 #include <memory.h>
 #include <signal.h>
@@ -84,9 +86,9 @@ class CProcess {
 
     msg.msg_control = cmsg;
     msg.msg_controllen = CMSG_LEN(sizeof(int));
-
+    printf("will send msg %d pipes %d\n", fd, pipes[1]);
     ssize_t ret = sendmsg(pipes[1], &msg, 0);
-
+    printf("send msg %d", *(int*)CMSG_DATA(cmsg));
     if (ret == -1) {
       printf("send fd failed! error: %d %s\n", errno, strerror(errno));
       return -2;
@@ -165,3 +167,5 @@ class CProcess {
   pid_t m_pid;
   int pipes[2];
 };
+
+#endif

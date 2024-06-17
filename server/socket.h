@@ -1,3 +1,6 @@
+#ifndef _SOCKET_H_
+#define _SOCKET_H_
+
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
@@ -18,7 +21,12 @@ class Buffer : public std::string {
   operator const char *() const { return c_str(); }
 };
 
-enum SockAttr { SOCK_ISSERVER = 1, SOCK_ISNONBLOCK = 2, SOCK_ISUDP = 4 };
+enum SockAttr {
+  SOCK_ISSERVER = 1,
+  SOCK_ISNONBLOCK = 2,
+  SOCK_ISUDP = 4,
+  SOCK_ISIP = 8
+};
 
 class CSocketParam {
  public:
@@ -96,7 +104,8 @@ class CSocketBase {
   virtual int Close() {
     m_status = 3;
     if (m_socket != -1) {
-      unlink(m_param.ip);
+      if ((m_param.attr & SOCK_ISSERVER) && ((m_param.attr & SOCK_ISIP) == 0))
+        unlink(m_param.ip);
       int fd = m_socket;
       m_socket = -1;
       close(fd);
@@ -125,14 +134,23 @@ class CLocalSocket : public CSocketBase {
     m_param = param;
 
     int type = (m_param.attr & SOCK_ISUDP) ? SOCK_DGRAM : SOCK_STREAM;
-    if (m_socket == -1)
-      m_socket = socket(AF_UNIX, type, 0);
+    if (m_socket == -1) {
+      if (param.attr & SOCK_ISIP) {
+        m_socket = socket(AF_INET, type, 0);
+      } else {
+        m_socket = socket(AF_UNIX, type, 0);
+      }
+    }
+
     else
       m_status = 2;
     if (m_socket == -1) return -2;
     int ret = 0;
     if (m_param.attr & SOCK_ISSERVER) {
-      ret = bind(m_socket, m_param.addrun(), sizeof(m_param.addr_un));
+      if (param.attr & SOCK_ISIP)
+        ret = bind(m_socket, m_param.addrin(), sizeof(m_param.addr_in));
+      else
+        ret = bind(m_socket, m_param.addrun(), sizeof(m_param.addr_un));
       if (ret == -1) return -3;
 
       ret = listen(m_socket, 32);
@@ -159,8 +177,15 @@ class CLocalSocket : public CSocketBase {
       if (pClient == NULL) return -2;
       CSocketParam param;
       socklen_t len = sizeof(sockaddr_un);
-
-      int fd = accept(m_socket, param.addrun(), &len);
+      int fd = -1;
+      if (m_param.attr & SOCK_ISIP) {
+        param.attr |= SOCK_ISIP;
+        socklen_t len = sizeof(sockaddr_in);
+        fd = accept(m_socket, param.addrin(), &len);
+      } else {
+        socklen_t len = sizeof(sockaddr_un);
+        fd = accept(m_socket, param.addrun(), &len);
+      }
       if (fd == -1) return -3;
       *pClient = new CLocalSocket(fd);
       if (*pClient == NULL) return -4;
@@ -171,7 +196,10 @@ class CLocalSocket : public CSocketBase {
         return -5;
       }
     } else {
-      ret = connect(m_socket, m_param.addrun(), sizeof(sockaddr_un));
+      if (m_param.attr & SOCK_ISIP)
+        ret = connect(m_socket, m_param.addrin(), sizeof(sockaddr_in));
+      else
+        ret = connect(m_socket, m_param.addrun(), sizeof(sockaddr_un));
       if (ret != 0) {
         printf("client link failed, ret: %d, %s\n", ret, strerror(errno));
         return -6;
@@ -211,7 +239,6 @@ class CLocalSocket : public CSocketBase {
     return -3;
   }
 
-  virtual int Close() {
-    return CSocketBase::Close();
-  }
+  virtual int Close() { return CSocketBase::Close(); }
 };
+#endif

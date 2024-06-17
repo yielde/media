@@ -1,3 +1,5 @@
+#ifndef _THREAD_H_
+#define _THREAD_H_
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -146,3 +148,4 @@ class CThread {
   bool m_paused;
   static std::map<pthread_t, CThread *> m_mapThread;
 };
+#endif

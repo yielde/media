@@ -1,3 +1,5 @@
+#ifndef _LOGGER_H_
+#define _LOGGER_H_
 #include <stdarg.h>
 #include <sys/stat.h>
 #include <sys/timeb.h>
@@ -109,8 +111,6 @@ class CLoggerServer {
       }
       ret = client.Link();
       if (ret != 0) {
-        printf("client link failed!,ret: %d,  errno: %d msg: %s thread: %ld\n",
-               ret, errno, strerror(errno), pthread_self());
         return;
       }
     }
@@ -166,8 +166,8 @@ class CLoggerServer {
                 Buffer data(1024 * 1024);
                 int r = pClient->Recv(data);
                 if (r <= 0) {
-                  delete pClient;
                   mapClients[*pClient] = NULL;
+                  delete pClient;
                 } else {
                   WriteLog(data);
                 }
@@ -256,4 +256,5 @@ class CLoggerServer {
   CLoggerServer::Trace(LogInfo(__FILE__, __LINE__, __FUNCTION__, getpid(), \
                                gettid(), LOG_FATAL, __VA_ARGS__))
 
+#endif
 #endif
