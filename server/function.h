@@ -1,9 +1,15 @@
-#pragma once
+#ifndef _FUNCTION_H_
+#define _FUNCTION_H_
 #include <functional>
+
+class CSocketBase;
+class Buffer;
 class CFunctionBase {
  public:
   virtual ~CFunctionBase() {}
-  virtual int operator()() = 0;
+  virtual int operator()() { return -1; }
+  virtual int operator()(CSocketBase *) { return -1; }
+  virtual int operator()(CSocketBase *, const Buffer &) { return -1; }
 };
 
 template <typename _FUNCTION_, typename... _ARGS_>
@@ -17,3 +23,4 @@ class CFunction : public CFunctionBase {
 
   typename std::_Bindres_helper<int, _FUNCTION_, _ARGS_...>::type m_binder;
 };
+#endif

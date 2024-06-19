@@ -100,6 +100,83 @@ class CProcess {
     return 0;
   }
 
+  int sendIPSocket(int fd, sockaddr_in* addrin) {
+    struct msghdr msg;
+    struct iovec iov[1];
+    char buf[0];
+
+    iov[0].iov_base = (void*)addrin;
+    iov[0].iov_len = sizeof(sockaddr_in);
+    msg.msg_name = NULL;
+    msg.msg_namelen = 0;
+    msg.msg_iov = iov;
+    msg.msg_iovlen = 1;
+
+    cmsghdr* cmsg = (cmsghdr*)calloc(1, CMSG_LEN(sizeof(int)));
+    if (cmsg == NULL) {
+      std::cerr << "cmsg has no memory!" << std::endl;
+      return -1;
+    }
+
+    cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+    cmsg->cmsg_level = SOL_SOCKET;
+    cmsg->cmsg_type = SCM_RIGHTS;
+
+    *(int*)CMSG_DATA(cmsg) = fd;
+
+    msg.msg_control = cmsg;
+    msg.msg_controllen = CMSG_LEN(sizeof(int));
+    printf("will send msg %d pipes %d\n", fd, pipes[1]);
+    ssize_t ret = sendmsg(pipes[1], &msg, 0);
+    printf("send msg %d", *(int*)CMSG_DATA(cmsg));
+    if (ret == -1) {
+      printf("send fd failed! error: %d %s\n", errno, strerror(errno));
+      return -2;
+    }
+
+    printf("[%s:%d] <%s>(%d) : send fd %d", __FILE__, __LINE__, __FUNCTION__,
+           getpid(), *(int*)CMSG_DATA(cmsg));
+    free(cmsg);
+    return 0;
+  }
+
+  int recvIPSocket(int& fd, sockaddr_in* addrin) {
+    struct msghdr msg;
+    struct iovec iov[1];
+    char buf[0];
+    iov[0].iov_base = (void*)addrin;
+    iov[0].iov_len = sizeof(sockaddr_in);
+    msg.msg_name = NULL;
+    msg.msg_namelen = 0;
+    msg.msg_iov = iov;
+    msg.msg_iovlen = 1;
+
+    cmsghdr* cmsg = (cmsghdr*)calloc(1, CMSG_LEN(sizeof(int)));
+    if (cmsg == NULL) {
+      std::cerr << "cmsg has no memory!" << std::endl;
+      return -1;
+    }
+
+    cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+    cmsg->cmsg_level = SOL_SOCKET;
+    cmsg->cmsg_type = SCM_RIGHTS;
+
+    msg.msg_control = cmsg;
+    msg.msg_controllen = CMSG_LEN(sizeof(int));
+
+    ssize_t ret = recvmsg(pipes[0], &msg, 0);
+    if (ret == -1) {
+      printf("receive fd failed!, error: %d %s\n", errno, strerror(errno));
+      free(cmsg);
+      return -2;
+    }
+
+    fd = *(int*)CMSG_DATA(cmsg);
+
+    free(cmsg);
+    return 0;
+  }
+
   int recvFD(int& fd) {
     struct msghdr msg;
     struct iovec iov[1];

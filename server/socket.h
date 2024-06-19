@@ -54,6 +54,11 @@ class CSocketParam {
     addr_in.sin_addr.s_addr = inet_addr(ip);
   }
 
+  CSocketParam(sockaddr_in *addrin, int attr) {
+    this->attr = attr;
+    memcpy(&addr_in, addrin, sizeof(addr_in));
+  }
+
   CSocketParam(const Buffer &path, int attr) {
     ip = path;
     addr_un.sun_family = AF_UNIX;
@@ -114,6 +119,8 @@ class CSocketBase {
   }
   virtual operator int() { return m_socket; }
   virtual operator int() const { return m_socket; }
+  virtual operator sockaddr_in *() { return &m_param.addr_in; }
+  virtual operator const sockaddr_in *() const { return &m_param.addr_in; }
 
  protected:
   int m_socket;
@@ -140,10 +147,9 @@ class CLocalSocket : public CSocketBase {
       } else {
         m_socket = socket(AF_UNIX, type, 0);
       }
-    }
-
-    else
+    } else
       m_status = 2;
+
     if (m_socket == -1) return -2;
     int ret = 0;
     if (m_param.attr & SOCK_ISSERVER) {

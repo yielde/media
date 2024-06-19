@@ -16,6 +16,7 @@
 #include "process.h"
 #include "server.h"
 #include "threadpool.h"
+#include "videoplayerserver.h"
 
 int LogTest() {
   char buffer[] = "galen! new new new say 设置 test\n";
@@ -79,7 +80,7 @@ int createClientServer(CProcess* proc) {
   return 0;
 }
 
-int main() {
+int old_main() {
   printf("start server~\n");
   // CProcess::switchDeamon();
 
@@ -122,6 +123,28 @@ int main() {
   (void)getchar();
   // sleep(5);
   printf("over!\n");
+  return 0;
+}
+
+int main() {
+  int ret = 0;
+  CProcess proclog;
+  ret = proclog.setEntryFunction(createLogServer, &proclog);
+  ERR_RETURN(ret, -1);
+  ret = proclog.CreateSubProcess();
+  ERR_RETURN(ret, -2);
+  sleep(3);
+  LOGI << "Start server";
+  CVideoPlayerServer business(5);
+  CServer server;
+  ret = server.Init(&business);
+  ERR_RETURN(ret, -3);
+  ret = server.Run();
+  ERR_RETURN(ret, -4);
+
+  (void)getchar();
+  LOGI << "kill process";
+  proclog.sendFD(-1);
   return 0;
 }
 

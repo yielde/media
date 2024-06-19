@@ -117,15 +117,27 @@ class CLoggerServer {
     client.Send(info);
   }
 
+  // static Buffer GetTimeStr() {
+  //   Buffer result(128);
+  //   timeb tmb;
+  //   ftime(&tmb);
+  //   tm *pTm = localtime(&tmb.time);
+  //   int nSize =
+  //       snprintf(result, result.size(), "%04d-%02d-%02d_%02d-%02d-%02d.%03d",
+  //                pTm->tm_year + 1900, pTm->tm_mon + 1, pTm->tm_mday,
+  //                pTm->tm_hour, pTm->tm_min, pTm->tm_sec, tmb.millitm);
+  //   result.resize(nSize);
+  //   return result;
+  // }
   static Buffer GetTimeStr() {
     Buffer result(128);
-    timeb tmb;
-    ftime(&tmb);
-    tm *pTm = localtime(&tmb.time);
+    struct timeval tv;
+    gettimeofday(&tv, nullptr);
+    tm *pTm = localtime(&tv.tv_sec);
     int nSize =
-        snprintf(result, result.size(), "%04d-%02d-%02d_%02d-%02d-%02d.%03d",
+        snprintf(result, result.size(), "%04d-%02d-%02d_%02d-%02d-%02d.%03ld",
                  pTm->tm_year + 1900, pTm->tm_mon + 1, pTm->tm_mday,
-                 pTm->tm_hour, pTm->tm_min, pTm->tm_sec, tmb.millitm);
+                 pTm->tm_hour, pTm->tm_min, pTm->tm_sec, tv.tv_usec);
     result.resize(nSize);
     return result;
   }
@@ -211,21 +223,26 @@ class CLoggerServer {
 
 #ifndef TRACE
 // 内存
-#define DUMPI(data, size)                                                  \
-  CLoggerServer::Trace(LogInfo(__FILE__, __LINE__, __FUNCTION__, getpid(), \
-                               gettid(), LOG_INFO, data, size))
-#define DUMPD(data, size)                                                  \
-  CLoggerServer::Trace(LogInfo(__FILE__, __LINE__, __FUNCTION__, getpid(), \
-                               gettid(), LOG_DEBUG, data, size))
+#define DUMPI(data, size)                                                     \
+  CLoggerServer::Trace(LogInfo(__FILE__, __LINE__, __FUNCTION__, getpid(),    \
+                               gettid(), LOG_INFO, static_cast<void *>(data), \
+                               size))
+#define DUMPD(data, size)                                                      \
+  CLoggerServer::Trace(LogInfo(__FILE__, __LINE__, __FUNCTION__, getpid(),     \
+                               gettid(), LOG_DEBUG, static_cast<void *>(data), \
+                               size))
 #define DUMPW(data, size)                                                  \
   CLoggerServer::Trace(LogInfo(__FILE__, __LINE__, __FUNCTION__, getpid(), \
-                               gettid(), LOG_WARNING, data, size))
-#define DUMPE(data, size)                                                  \
-  CLoggerServer::Trace(LogInfo(__FILE__, __LINE__, __FUNCTION__, getpid(), \
-                               gettid(), LOG_ERROR, data, size))
-#define DUMPF(data, size)                                                  \
-  CLoggerServer::Trace(LogInfo(__FILE__, __LINE__, __FUNCTION__, getpid(), \
-                               gettid(), LOG_FATAL, data, size))
+                               gettid(), LOG_WARNING,                      \
+                               static_cast<void *>(data), size))
+#define DUMPE(data, size)                                                      \
+  CLoggerServer::Trace(LogInfo(__FILE__, __LINE__, __FUNCTION__, getpid(),     \
+                               gettid(), LOG_ERROR, static_cast<void *>(data), \
+                               size))
+#define DUMPF(data, size)                                                      \
+  CLoggerServer::Trace(LogInfo(__FILE__, __LINE__, __FUNCTION__, getpid(),     \
+                               gettid(), LOG_FATAL, static_cast<void *>(data), \
+                               size))
 
 // 直接记录
 #define LOGI \

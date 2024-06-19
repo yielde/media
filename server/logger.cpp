@@ -7,7 +7,7 @@ LogInfo::LogInfo(const char *file, int line, const char *func, pid_t pid,
   const char sLevel[][8] = {"INFO", "DEBUG", "WARNING", "ERROR", "FATAL"};
   // 日志头
   int count =
-      asprintf(&buf, "%s(%d):[%s][%s]<%d-%d>(%s) ", file, line, sLevel[level],
+      asprintf(&buf, "%s(%d):[%s][%s]<%d-%ld>(%s) ", file, line, sLevel[level],
                (char *)CLoggerServer::GetTimeStr(), pid, tid, func);
   if (count > 0) {
     m_buf = buf;
@@ -22,7 +22,7 @@ LogInfo::LogInfo(const char *file, int line, const char *func, pid_t pid,
   const char sLevel[][8] = {"INFO", "DEBUG", "WARNING", "ERROR", "FATAL"};
   // 日志头
   int count =
-      asprintf(&buf, "%s(%d):[%s][%s]<%d-%d>(%s) ", file, line, sLevel[level],
+      asprintf(&buf, "%s(%d):[%s][%s]<%d-%ld>(%s) ", file, line, sLevel[level],
                (char *)CLoggerServer::GetTimeStr(), pid, tid, func);
 
   if (count > 0) {
@@ -48,9 +48,9 @@ LogInfo::LogInfo(const char *file, int line, const char *func, pid_t pid,
   char *buf = NULL;
   const char sLevel[][8] = {"INFO", "DEBUG", "WARNING", "ERROR", "FATAL"};
   // 日志头
-  int count = asprintf(&buf, "%s(%d):[%s][%s]<%d - %d>(%s)\n", file, line,
-                       sLevel[level], (char *)CLoggerServer::GetTimeStr(), pid,
-                       tid, func);
+  int count =
+      asprintf(&buf, "%s(%d):[%s][%s]<%d-%ld>(%s)\n", file, line, sLevel[level],
+               (char *)CLoggerServer::GetTimeStr(), pid, tid, func);
   if (count > 0) {
     m_buf = buf;
     free(buf);
