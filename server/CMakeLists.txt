@@ -1,4 +1,6 @@
 project(server)
-
-add_executable(main main.cpp logger.cpp thread.cpp threadpool.cpp httpparser.cpp http_parser.c)
-target_link_libraries(main pthread)
+set(CMAKE_BUILD_TYPE Debug)
+link_directories(${CMAKE_SOURCE_DIR}/sqlite3/lib)
+include_directories(${CMAKE_SOURCE_DIR}/sqlite3/include)
+add_executable(main main.cpp logger.cpp thread.cpp threadpool.cpp httpparser.cpp http_parser.c sqlite3client.cpp databasehelper.cpp)
+target_link_libraries(main pthread sqlite3)

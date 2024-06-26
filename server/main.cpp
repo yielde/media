@@ -2,7 +2,7 @@
 #include <memory.h>
 #include <netinet/in.h>
 #include <signal.h>
-#include <sys/socket.h>
+// #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -16,6 +16,7 @@
 #include "logger.h"
 #include "process.h"
 #include "server.h"
+#include "sqlite3client.h"
 #include "threadpool.h"
 #include "videoplayerserver.h"
 
@@ -81,7 +82,7 @@ int createClientServer(CProcess *proc) {
   return 0;
 }
 
-int old_main1() {
+int test_thread() {
   printf("start server~\n");
   // CProcess::switchDeamon();
 
@@ -127,7 +128,7 @@ int old_main1() {
   return 0;
 }
 
-int old_main2() {
+int test_business_server() {
   int ret = 0;
   CProcess proclog;
   ret = proclog.setEntryFunction(createLogServer, &proclog);
@@ -149,7 +150,7 @@ int old_main2() {
   return 0;
 }
 
-int main() {
+int test_http_parser() {
   int ret = 0;
   // test httpparser
   CHttpParser parser;
@@ -237,53 +238,84 @@ int main() {
   return 0;
 }
 
-// int main() {
-//   printf("start main: \n");
-//   CProcess::switchDeamon();
+DECLARE_TABLE_CLASS(user_test, _sqlite3_table_)
+DECLARE_FIELD(TYPE_INT, user_id, NOT_NULL | PRIMARY_KEY | AUTOINCREMENT,
+              "INTEGER", "", "", "")
+DECLARE_FIELD(TYPE_VARCHAR, user_qq, 0, "VARCHAR", "(15)", "", "")
+DECLARE_FIELD(TYPE_VARCHAR, user_phone, NOT_NULL | DEFAULT, "VARCHAR", "(11)",
+              "18888888888", "")
+DECLARE_FIELD(TYPE_TEXT, user_name, 0, "TEXT", "", "小孩哥", "")
+DECLARE_TABLE_CLASS_END()
 
-//   CProcess proclog, procclient;
-//   proclog.setEntryFunction(createLogServer, &proclog);
-//   int ret = proclog.CreateSubProcess();
+int sqlite3_test() {
+  // 使用
+  // user_test test;
+  // printf("create: %s\n", (char *)test.Create());
+  // user_test values;
+  // values.Fields["user_qq"]->LoadFromStr("937013596");
+  // values.Fields["user_qq"]->Condition = SQL_INSERT;
+  // printf("insert: %s\n", (char *)test.Insert(values));
+  // values.Fields["user_qq"]->LoadFromStr("93701359666");
+  // values.Fields["user_qq"]->Condition = SQL_MODIFY;
+  // values.Fields["user_id"]->LoadFromStr("0");
+  // values.Fields["user_id"]->Condition = SQL_CONDITION;
+  // values.Fields["user_phone"]->LoadFromStr("18888888888");
+  // values.Fields["user_phone"]->Condition = SQL_CONDITION;
+  // printf("modify: %s\n", (char *)test.Modify(values));
+  // printf("query: %s\n", (char *)test.Query());
+  // test.Fields["user_phone"]->LoadFromStr("18888888888");
+  // test.Fields["user_phone"]->Condition = SQL_CONDITION;
+  // test.Fields["user_id"]->LoadFromStr("0");
+  // test.Fields["user_id"]->Condition = SQL_CONDITION;
+  // printf("delete: %s\n", (char *)test.Delete(test))
+  // printf("drop: %s\n", (char *)test.Drop());
 
-//   if (ret != 0) {
-//     return -1;
-//   }
+  getchar();
+  printf("next~~~\n\n");
+  CDatabaseClient *pClient = new CSqlite3Client();
+  KeyValue args;
+  user_test test;
+  user_test value;
+  int ret = -1;
+  args["host"] = "test.db";
+  ret = pClient->Connect(args);
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
+  ret = pClient->Exec(test.Create());
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
 
-//   procclient.setEntryFunction(createClientServer, &procclient);
-//   ret = procclient.CreateSubProcess();
-//   if (ret != 0) {
-//     return -2;
-//   }
+  value.Fields["user_qq"]->LoadFromStr("937013596");
+  value.Fields["user_qq"]->Condition = SQL_INSERT;
+  ret = pClient->Exec(test.Insert(value));
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
 
-//   int fd = open("./test.txt", O_RDWR | O_CREAT | O_TRUNC, 0666);
+  value.Fields["user_qq"]->LoadFromStr("93701359666");
+  value.Fields["user_qq"]->Condition = SQL_MODIFY;
 
-//   printf("[%s:%d] <%s>(%d): main fd %d\n", __FILE__, __LINE__, __FUNCTION__,
-//          getpid(), fd);
+  ret = pClient->Exec(test.Modify(value));
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
 
-//   if (fd == -1) {
-//     return -3;
-//   }
+  Result result;
+  ret = pClient->Exec(test.Query(), result, test);
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
 
-//   ret = procclient.sendFD(fd);
+  ret = pClient->Exec(test.Delete(value));
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
 
-//   if (ret != 0) {
-//     printf("[%s:%d] <%s>(%d): main send failed\n", __FILE__, __LINE__,
-//            __FUNCTION__, getpid());
-//     return ret;
-//   }
+  ret = pClient->Exec(test.Drop());
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
 
-//   ret = write(fd, "galen\n", 6);
-//   if (ret == -1) {
-//     printf("[%s:%d] <%s>(%d): main write failed, (%d)%s\n", __FILE__,
-//     __LINE__,
-//            __FUNCTION__, getpid(), errno, strerror(errno));
-//   }
-//   printf("[%s:%d] <%s>(%d): main write success\n", __FILE__, __LINE__,
-//          __FUNCTION__, getpid());
+  ret = pClient->Close();
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
 
-//   close(fd);
-//   sleep(10);
-//   proclog.sendFD(-1);
-//   printf("main process send fd !\n");
-//   return 0;
-// }
+  return 0;
+}
+
+int main() {
+  CProcess proclog;
+  proclog.setEntryFunction(createLogServer, &proclog);
+  proclog.CreateSubProcess();
+  sleep(1);
+  sqlite3_test();
+  getchar();
+  return 0;
+}
