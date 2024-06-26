@@ -262,7 +262,10 @@ _sqlite3_table_::operator Buffer() const {
   return Head + '"' + Name + '"';
 }
 
-_sqlite3_field_::_sqlite3_field_() : _Field_() { nType = TYPE_NULL; }
+_sqlite3_field_::_sqlite3_field_() : _Field_() {
+  nType = TYPE_NULL;
+  Value.Double = 0.0;
+}
 
 _sqlite3_field_::_sqlite3_field_(int ntype, const Buffer& name, unsigned attr,
                                  const Buffer& type, const Buffer& size,

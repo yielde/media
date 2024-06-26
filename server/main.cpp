@@ -14,6 +14,7 @@
 #include "epoll.h"
 #include "httpparser.h"
 #include "logger.h"
+#include "mysqlclient.h"
 #include "process.h"
 #include "server.h"
 #include "sqlite3client.h"
@@ -244,7 +245,7 @@ DECLARE_FIELD(TYPE_INT, user_id, NOT_NULL | PRIMARY_KEY | AUTOINCREMENT,
 DECLARE_FIELD(TYPE_VARCHAR, user_qq, 0, "VARCHAR", "(15)", "", "")
 DECLARE_FIELD(TYPE_VARCHAR, user_phone, NOT_NULL | DEFAULT, "VARCHAR", "(11)",
               "18888888888", "")
-DECLARE_FIELD(TYPE_TEXT, user_name, 0, "TEXT", "", "小孩哥", "")
+DECLARE_FIELD(TYPE_TEXT, user_name, 0, "TEXT", "", "", "")
 DECLARE_TABLE_CLASS_END()
 
 int sqlite3_test() {
@@ -310,12 +311,93 @@ int sqlite3_test() {
   return 0;
 }
 
+MYSQL_DECLARE_TABLE_CLASS(muser_test, _mysql_table_)
+MYSQL_DECLARE_FIELD(TYPE_INT, user_id, NOT_NULL | PRIMARY_KEY | AUTOINCREMENT,
+                    "INTEGER", "", "", "")
+MYSQL_DECLARE_FIELD(TYPE_VARCHAR, user_qq, 0, "VARCHAR", "(15)", "", "")
+MYSQL_DECLARE_FIELD(TYPE_VARCHAR, user_phone, NOT_NULL | DEFAULT, "VARCHAR",
+                    "(11)", "18888888888", "")
+MYSQL_DECLARE_FIELD(TYPE_TEXT, user_name, 0, "TEXT", "", "小孩哥", "")
+MYSQL_DECLARE_TABLE_CLASS_END()
+
+int mysql_test() {  // 使用
+  // muser_test test;
+  // printf("create: %s\n", (char *)test.Create());
+  // user_test values;
+  // values.Fields["user_qq"]->LoadFromStr("937013596");
+  // values.Fields["user_qq"]->Condition = SQL_INSERT;
+  // printf("insert: %s\n", (char *)test.Insert(values));
+  // values.Fields["user_qq"]->LoadFromStr("93701359666");
+  // values.Fields["user_qq"]->Condition = SQL_MODIFY;
+  // values.Fields["user_id"]->LoadFromStr("0");
+  // values.Fields["user_id"]->Condition = SQL_CONDITION;
+  // values.Fields["user_phone"]->LoadFromStr("18888888888");
+  // values.Fields["user_phone"]->Condition = SQL_CONDITION;
+  // printf("modify: %s\n", (char *)test.Modify(values));
+  // printf("query: %s\n", (char *)test.Query());
+  // test.Fields["user_phone"]->LoadFromStr("18888888888");
+  // test.Fields["user_phone"]->Condition = SQL_CONDITION;
+  // test.Fields["user_id"]->LoadFromStr("0");
+  // test.Fields["user_id"]->Condition = SQL_CONDITION;
+  // printf("delete: %s\n", (char *)test.Delete(test));
+  // printf("drop: %s\n", (char *)test.Drop());
+
+  getchar();
+  printf("next~~~\n\n");
+  CDatabaseClient *pClient = new CMysqlClient();
+  KeyValue args;
+  muser_test test;
+  muser_test value;
+  int ret = -1;
+  args["host"] = "localhost";
+  args["password"] = "th303th303";
+  args["port"] = 3306;
+  args["user"] = "root";
+  args["db"] = "video";
+  ret = pClient->Connect(args);
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
+  ret = pClient->Exec(test.Create());
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
+
+  value.Fields["user_qq"]->LoadFromStr("937013596");
+  value.Fields["user_qq"]->Condition = SQL_INSERT;
+  ret = pClient->Exec(test.Insert(value));
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
+
+  ret = pClient->Exec(test.Insert(value));
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
+
+  value.Fields["user_qq"]->LoadFromStr("93701359666");
+  value.Fields["user_qq"]->Condition = SQL_MODIFY;
+
+  ret = pClient->Exec(test.Modify(value));
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
+
+  Result result;
+  ret = pClient->Exec(test.Query(), result, test);
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
+  value.ClearConditionUsed();
+  value.Fields["user_id"]->LoadFromStr("1");
+  value.Fields["user_id"]->Condition = SQL_CONDITION;
+
+  ret = pClient->Exec(test.Delete(value));
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
+
+  // ret = pClient->Exec(test.Drop());
+  // printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
+
+  ret = pClient->Close();
+  printf("%s(%d):<%s> ret=%d\n", __FILE__, __LINE__, __FUNCTION__, ret);
+
+  return 0;
+}
+
 int main() {
   CProcess proclog;
   proclog.setEntryFunction(createLogServer, &proclog);
   proclog.CreateSubProcess();
   sleep(1);
-  sqlite3_test();
+  mysql_test();
   getchar();
   return 0;
 }

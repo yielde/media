@@ -1,3 +1,6 @@
+#ifndef _DATABASEHELPTER_H_
+#define _DATABASEHELPTER_H_
+
 #include <list>
 #include <map>
 #include <memory>
@@ -37,6 +40,20 @@ enum {
   PRIMARY_KEY = 8,
   CHECK = 16,
   AUTOINCREMENT = 32
+};
+using SqlType = enum {
+  TYPE_NULL = 0,
+  TYPE_BOOL = 1,
+
+  TYPE_INT = 2,
+  TYPE_DATETIME = 4,
+
+  TYPE_REAL = 8,
+
+  TYPE_VARCHAR = 16,
+  TYPE_TEXT = 32,
+
+  TYPE_BLOB = 64
 };
 
 class _Field_ {
@@ -97,22 +114,4 @@ class _Table_ {
 };
 
 class CDatabaseHelper {};
-
-#define DECLARE_TABLE_CLASS(name, base)                             \
-  class name : public base {                                        \
-   public:                                                          \
-    virtual PTable Copy() const { return PTable(new name(*this)); } \
-    name() : base() {                                               \
-      Name = #name; /*将name 转换为 "name" */
-#define DECLARE_FIELD(ntype, name, attr, type, size, default_, check)          \
-  {                                                                            \
-    PField field(                                                              \
-        new _sqlite3_field_(ntype, #name, attr, type, size, default_, check)); \
-    FieldDefine.push_back(field);                                              \
-    Fields[#name] = field;                                                     \
-  }
-
-#define DECLARE_TABLE_CLASS_END() \
-  }                               \
-  }                               \
-  ;
+#endif

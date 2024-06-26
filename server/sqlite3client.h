@@ -5,7 +5,7 @@
 class CSqlite3Client : public CDatabaseClient {
  public:
   CSqlite3Client(const CSqlite3Client&) = delete;
-  CSqlite3Client& operator=(const CDatabaseClient&) = delete;
+  CSqlite3Client& operator=(const CSqlite3Client&) = delete;
 
   CSqlite3Client() { m_db = NULL, m_stmt = NULL; }
   virtual ~CSqlite3Client() { Close(); }
@@ -63,21 +63,6 @@ class _sqlite3_table_ : public _Table_ {
   virtual operator Buffer() const;
 };
 
-using SqlType = enum {
-  TYPE_NULL = 0,
-  TYPE_BOOL = 1,
-
-  TYPE_INT = 2,
-  TYPE_DATETIME = 4,
-
-  TYPE_REAL = 8,
-
-  TYPE_VARCHAR = 16,
-  TYPE_TEXT = 32,
-
-  TYPE_BLOB = 64
-};
-
 class _sqlite3_field_ : public _Field_ {
  public:
   _sqlite3_field_();
@@ -104,3 +89,22 @@ class _sqlite3_field_ : public _Field_ {
 
   int nType;
 };
+
+#define DECLARE_TABLE_CLASS(name, base)                             \
+  class name : public base {                                        \
+   public:                                                          \
+    virtual PTable Copy() const { return PTable(new name(*this)); } \
+    name() : base() {                                               \
+      Name = #name; /*将name 转换为 "name" */
+#define DECLARE_FIELD(ntype, name, attr, type, size, default_, check)          \
+  {                                                                            \
+    PField field(                                                              \
+        new _sqlite3_field_(ntype, #name, attr, type, size, default_, check)); \
+    FieldDefine.push_back(field);                                              \
+    Fields[#name] = field;                                                     \
+  }
+
+#define DECLARE_TABLE_CLASS_END() \
+  }                               \
+  }                               \
+  ;
