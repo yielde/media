@@ -5,8 +5,11 @@
 #include <QDesktopServices>
 #include <QJsonParseError>
 #include <QMouseEvent>
+#include <QRandomGenerator>
 #include <QtNetwork/QNetworkReply>
 
+const char* MD5_KEY = "abcdefghijklmnopqrstuvwxyz";
+const char* HOST = "http://10.211.55.3:9999";
 bool LOGIN_STATUS = false;
 
 LoginForm::LoginForm(QWidget* parent)
@@ -24,8 +27,8 @@ LoginForm::LoginForm(QWidget* parent)
     ui->pwdEdit->setEchoMode(QLineEdit::Password);
     ui->pwdEdit->installEventFilter(this);
     ui->forget->installEventFilter(this);
-    // net = new QNetworkAccessManager(this);
-    // connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(slots_login_request_fineshed(QNetworkReply*)));
+    net = new QNetworkAccessManager(this);
+    connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(slots_login_request_fineshed(QNetworkReply*)));
     info.setWindowFlag(Qt::FramelessWindowHint);
     info.setWindowModality(Qt::ApplicationModal);
     load_config();
@@ -138,10 +141,10 @@ void LoginForm::slots_login_request_fineshed(QNetworkReply* reply)
 {
     this->setEnabled(true);
     bool login_success = false;
-    // if (reply->error() != QNetworkReply::NoError) {
-    //     info.set_text("登录失败\n" + reply->errorString(), "确认").show();
-    //     return;
-    // }
+    if (reply->error() != QNetworkReply::NoError) {
+        info.set_text("登录失败\n" + reply->errorString(), "确认").show();
+        return;
+    }
     QByteArray data = reply->readAll();
     qDebug() << data;
     QJsonParseError json_error;
@@ -186,18 +189,38 @@ QString getTime()
 bool LoginForm::check_login(const QString& user, const QString& pwd)
 {
     // TODO:远程登录
-    LOGIN_STATUS = true;
-    record->config()["user"] = ui->nameEdit->text();
+    QCryptographicHash md5(QCryptographicHash::Md5);
+    QNetworkRequest request;
+    QString url = QString(HOST) + "/login?";
+    QString salt = QString::number(QRandomGenerator::global()->bounded(10000, 99999));
+    QString time = getTime();
+    qDebug().nospace() << __FILE__ << "(" << __LINE__ << "):" << time + MD5_KEY + pwd + salt;
+    md5.addData((time + MD5_KEY + pwd + salt).toUtf8());
+    QString sign = md5.result().toHex();
+    url += "time=" + time + "&";
+    url += "salt=" + salt + "&";
+    url += "user=" + user + "&";
+    url += "sign=" + sign;
+    qDebug() << url;
+    request.setUrl(QUrl(url));
     record->config()["password"] = ui->pwdEdit->text();
-    emit login(record->config()["user"].toString(), QByteArray());
-    hide();
-    char tm[64] = "";
-    time_t t;
-    ::time(&t);
-    strftime(tm, sizeof(tm), "%Y-%m-%d %H:%M:%S", localtime(&t));
-    record->config()["date"] = QString(tm);
-    qDebug() << record->config();
-    record->save();
+    record->config()["user"] = ui->nameEdit->text();
+    this->setEnabled(false);
+    net->get(request);
+    return true;
+    // 本地测试
+    // LOGIN_STATUS = true;
+    // record->config()["user"] = ui->nameEdit->text();
+    // record->config()["password"] = ui->pwdEdit->text();
+    // emit login(record->config()["user"].toString(), QByteArray());
+    // hide();
+    // char tm[64] = "";
+    // time_t t;
+    // ::time(&t);
+    // strftime(tm, sizeof(tm), "%Y-%m-%d %H:%M:%S", localtime(&t));
+    // record->config()["date"] = QString(tm);
+    // qDebug() << record->config();
+    // record->save();
 
     return false;
 }
