@@ -401,7 +401,27 @@ int crypto_test() {
   return 0;
 }
 
+int test_all() {
+  int ret = 0;
+  CProcess proclog;
+  ret = proclog.setEntryFunction(createLogServer, &proclog);
+  ERR_RETURN(ret, -1);
+  ret = proclog.CreateSubProcess();
+  sleep(3);
+  ERR_RETURN(ret, -2);
+  CVideoPlayerServer business(6);
+  CServer server;
+  ret = server.Init(&business);
+  ERR_RETURN(ret, -3);
+  ret = server.Run();
+  sleep(1);
+  ERR_RETURN(ret, -4);
+  return 0;
+}
+
 int main() {
-  crypto_test();
+  int ret = test_all();
+  printf("ret : %d\n", ret);
+  getchar();
   return 0;
 }

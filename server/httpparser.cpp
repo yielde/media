@@ -133,17 +133,17 @@ int UrlParser::Parser() {
   target = strchr(value, ':');
   if (target != NULL) {
     m_host = Buffer(value, target);
-    m_port = Buffer(target + 1, (const char*)value + value.size());
+    m_port = atoi(Buffer(target + 1, (const char*)value + value.size()));
   } else
     m_host = value;
   // 解析uri
   pos = strchr(pos, '/');
   target = strchr(pos, '?');
   if (target == NULL) {
-    m_uri = pos;
+    m_uri = pos + 1;
     return 0;
   } else {
-    m_uri = Buffer(pos, target);
+    m_uri = Buffer(pos + 1, target);
     pos = target + 1;  // ? 后面的key-value
 
     const char* t = NULL;

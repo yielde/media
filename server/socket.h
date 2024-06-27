@@ -14,7 +14,8 @@ enum SockAttr {
   SOCK_ISSERVER = 1,
   SOCK_ISNONBLOCK = 2,
   SOCK_ISUDP = 4,
-  SOCK_ISIP = 8
+  SOCK_ISIP = 8,
+  SOCK_ISREUSE = 16
 };
 
 class CSocketParam {
@@ -39,7 +40,7 @@ class CSocketParam {
     this->port = port;
     this->attr = attr;
     addr_in.sin_family = AF_INET;
-    addr_in.sin_port = port;
+    addr_in.sin_port = htons(port);
     addr_in.sin_addr.s_addr = inet_addr(ip);
   }
 
@@ -131,7 +132,7 @@ class CLocalSocket : public CSocketBase {
 
     int type = (m_param.attr & SOCK_ISUDP) ? SOCK_DGRAM : SOCK_STREAM;
     if (m_socket == -1) {
-      if (param.attr & SOCK_ISIP) {
+      if (m_param.attr & SOCK_ISIP) {
         m_socket = socket(AF_INET, type, 0);
       } else {
         m_socket = socket(AF_UNIX, type, 0);
@@ -141,6 +142,13 @@ class CLocalSocket : public CSocketBase {
 
     if (m_socket == -1) return -2;
     int ret = 0;
+    if (m_param.attr & SOCK_ISREUSE) {
+      int option = 1;
+      ret = setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, &option,
+                       sizeof(option));
+      if (ret == -1) return -7;
+    }
+
     if (m_param.attr & SOCK_ISSERVER) {
       if (param.attr & SOCK_ISIP)
         ret = bind(m_socket, m_param.addrin(), sizeof(m_param.addr_in));
@@ -157,7 +165,7 @@ class CLocalSocket : public CSocketBase {
       if (option == -1) return -5;
       option |= O_NONBLOCK;
       ret = fcntl(m_socket, F_SETFL, option);
-      if (ret == -1) return -5;
+      if (ret == -1) return -6;
     }
     if (m_status == 0) m_status = 1;
     return 0;
@@ -218,14 +226,14 @@ class CLocalSocket : public CSocketBase {
 
   virtual int Recv(Buffer &data) {
     if ((m_status < 2) || (m_socket == -1)) return -1;
-
+    data.resize(1024 * 1024);
     ssize_t len = read(m_socket, data, data.size());
     if (len > 0) {
       data.resize(len);
       return (int)len;
     }
     if (len < 0) {
-      if (errno == EINTR || errno == EAGAIN) {
+      if ((errno == EINTR) || (errno == EAGAIN)) {
         data.clear();
         return 0;
       }

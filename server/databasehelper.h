@@ -33,7 +33,9 @@ class CDatabaseClient {
 };
 
 enum { SQL_INSERT = 1, SQL_MODIFY = 2, SQL_CONDITION = 4 };
+
 enum {
+  NONE = 0,
   NOT_NULL = 1,
   DEFAULT = 2,
   UNIQUE = 4,
@@ -41,6 +43,7 @@ enum {
   CHECK = 16,
   AUTOINCREMENT = 32
 };
+
 using SqlType = enum {
   TYPE_NULL = 0,
   TYPE_BOOL = 1,
@@ -77,6 +80,13 @@ class _Field_ {
   Buffer Default;
   Buffer Check;
   unsigned Condition;
+
+  union {
+    bool Bool;
+    int Integer;
+    double Double;
+    Buffer* String;
+  } Value;
 };
 
 using PField = std::shared_ptr<_Field_>;
@@ -95,7 +105,7 @@ class _Table_ {
   virtual Buffer Insert(const _Table_& values) = 0;
   virtual Buffer Delete(const _Table_& values) = 0;
   virtual Buffer Modify(const _Table_& values) = 0;
-  virtual Buffer Query() = 0;
+  virtual Buffer Query(const Buffer& condition = "") = 0;
   // 清理使用状态
   virtual void ClearConditionUsed() = 0;
   // 创建表对象

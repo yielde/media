@@ -232,14 +232,17 @@ Buffer _sqlite3_table_::Modify(const _Table_& values) {
   return sql;
 }
 
-Buffer _sqlite3_table_::Query() {
+Buffer _sqlite3_table_::Query(const Buffer& condition) {
   // SELECT 字段1，字段2，。。。 FROM 表全名; （暂时不做WHERE查询）
   Buffer sql = "SELECT ";
   for (size_t i = 0; i < FieldDefine.size(); ++i) {
     if (i > 0) sql += ',';
     sql += '"' + FieldDefine[i]->Name + '"' + ' ';
   }
-  sql += " FROM " + (Buffer)(*this) + ';';
+  sql += " FROM " + (Buffer)(*this);
+  if (condition.size() > 0) sql += " WHERE " + condition;
+  sql += ';';
+
   TRACEI("sql = %s", BUFFER_TO_CHAR(sql));
   return sql;
 }

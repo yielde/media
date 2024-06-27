@@ -1,3 +1,5 @@
+#ifndef _HTTPPARSER_H_
+#define _HTTPPARSER_H_
 #include <map>
 
 #include "http_parser.h"
@@ -50,18 +52,21 @@ class CHttpParser {
 class UrlParser {
  public:
   UrlParser(const Buffer& url);
+  ~UrlParser() {}
   int Parser();
   Buffer operator[](const Buffer& name) const;
   Buffer Protocol() const { return m_protocol; }
   Buffer Host() const { return m_host; }
-  int Port() const { return atoi(m_port); }
+  int Port() const { return m_port; }
   void SetUrl(const Buffer& url);
+  const Buffer Uri() const { return m_uri; }
 
  private:
   Buffer m_url;
   Buffer m_uri;
   Buffer m_protocol;
   Buffer m_host;
-  Buffer m_port;
+  int m_port;
   std::map<Buffer, Buffer> m_values;
 };
+#endif

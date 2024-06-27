@@ -1,3 +1,5 @@
+#ifndef _MYSQLCLIENT_H_
+#define _MYSQLCLIENT_H_
 #include <mysql/mysql.h>
 
 #include "databasehelper.h"
@@ -54,7 +56,7 @@ class _mysql_table_ : public _Table_ {
   virtual Buffer Insert(const _Table_& values);
   virtual Buffer Delete(const _Table_& values);
   virtual Buffer Modify(const _Table_& values);
-  virtual Buffer Query();
+  virtual Buffer Query(const Buffer& condition = "");
   virtual void ClearConditionUsed();
 
   // 创建表对象
@@ -80,13 +82,6 @@ class _mysql_field_ : public _Field_ {
  private:
   Buffer Str2Hex(const Buffer& data) const;
 
-  union {
-    bool Bool;
-    int Integer;
-    double Double;
-    Buffer* String;
-  } Value;
-
   int nType;
 };
 
@@ -107,3 +102,4 @@ class _mysql_field_ : public _Field_ {
   }                                     \
   }                                     \
   ;
+#endif

@@ -35,7 +35,7 @@ class CReceivedFunction : public CFunctionBase {
 class CBusiness {
  public:
   CBusiness() : m_connectedcallback(NULL), m_recvcallback(NULL) {}
-  virtual int BusinessProcess(CProcess*) = 0;
+  virtual int BusinessProcess(CProcess* proc) = 0;
 
   template <typename _FUNCTION_, typename... _ARGS_>
   int setConnectedCallback(_FUNCTION_ func, _ARGS_... args) {
@@ -69,23 +69,24 @@ class CServer {
   CServer(const CServer&) = delete;
   CServer& operator=(const CServer&) = delete;
 
-  int Init(CBusiness* business, const Buffer& ip = "127.0.0.1",
+  int Init(CBusiness* business, const Buffer& ip = "0.0.0.0",
            short port = 9999) {
-    m_business = business;
-    if (m_business == NULL) return -1;
     int ret = 0;
+    if (business == NULL) return -1;
+    m_business = business;
     ret = m_process.setEntryFunction(&CBusiness::BusinessProcess, m_business,
                                      &m_process);
     if (ret != 0) return -2;
     ret = m_process.CreateSubProcess();
     if (ret != 0) return -3;
-    ret = m_pool.Start(5);
+    ret = m_pool.Start(2);
     if (ret != 0) return -4;
-    ret = m_epoll.Create(5);
+    ret = m_epoll.Create(2);
     if (ret != 0) return -5;
     m_server = new CLocalSocket();
     if (m_server == NULL) return -6;
-    ret = m_server->Init(CSocketParam(ip, port, SOCK_ISSERVER | SOCK_ISIP));
+    ret = m_server->Init(
+        CSocketParam(ip, port, SOCK_ISSERVER | SOCK_ISIP | SOCK_ISREUSE));
     if (ret != 0) return -7;
     m_epoll.Add(*m_server, EpollData((void*)m_server));
     if (ret != 0) return -8;
@@ -119,12 +120,14 @@ class CServer {
 
  private:
   int ThreadFunc() {
+    TRACEI("epoll %d, server %p", (int)m_epoll, m_server);
     int ret = 0;
     EPEvents evs;
     while ((m_epoll != -1) && (m_server != NULL)) {
-      ssize_t size = m_epoll.WaitEvent(evs);
+      ssize_t size = m_epoll.WaitEvent(evs, 1000);
       if (size < 0) break;
       if (size > 0) {
+        TRACEI("size=%ld, event=%08X", size, evs[0].events);
         for (ssize_t i = 0; i < size; i++) {
           if (evs[i].events & EPOLLERR) {
             break;
@@ -134,9 +137,11 @@ class CServer {
               ret = m_server->Link(&pClient);
               if (ret != 0) continue;
               ret = m_process.sendIPSocket(*pClient, *pClient);
+              TRACEI("SendIPSocket %d", ret);
+              int s = *pClient;
               delete pClient;
               if (ret != 0) {
-                TRACEE("send client %d failed!", (int)*pClient);
+                TRACEE("send client %d failed!", s);
                 continue;
               }
             }
@@ -144,6 +149,7 @@ class CServer {
         }
       }
     }
+    TRACEI("server close~");
     return 0;
   }
 

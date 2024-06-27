@@ -69,7 +69,8 @@ class CLoggerServer {
       return -4;
     }
 
-    ret = m_server->Init(CSocketParam("./log/server.sock", (int)SOCK_ISSERVER));
+    ret = m_server->Init(
+        CSocketParam("./log/server.sock", (int)SOCK_ISSERVER | SOCK_ISREUSE));
     if (ret != 0) {
       Close();
       return -5;
@@ -106,7 +107,6 @@ class CLoggerServer {
     if (client == -1) {
       ret = client.Init(CSocketParam("./log/server.sock", (int)0));
       if (ret != 0) {
-        printf("client init failed!\n");
         return;
       }
       ret = client.Link();

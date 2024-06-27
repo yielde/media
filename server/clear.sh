@@ -7,3 +7,4 @@ for FILE in *; do
 done
 
 rm -rf ./log
+rm *.sock

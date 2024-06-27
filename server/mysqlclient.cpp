@@ -218,13 +218,17 @@ Buffer _mysql_table_::Modify(const _Table_& values) {
   return sql;
 }
 
-Buffer _mysql_table_::Query() {
+Buffer _mysql_table_::Query(const Buffer& condition) {
   Buffer sql = "SELECT ";
   for (size_t i = 0; i < FieldDefine.size(); ++i) {
     if (i > 0) sql += ',';
     sql += '`' + FieldDefine[i]->Name + '`' + ' ';
   }
-  sql += " FROM " + (Buffer)(*this) + ';';
+  sql += " FROM " + (Buffer)(*this);
+  if (condition.size() > 0) {
+    sql += " WHERE " + condition;
+  }
+  sql += ';';
   TRACEI("SELECT: %s", BUFFER_TO_CHAR(sql));
   return sql;
 }
