@@ -1,6 +1,10 @@
+cmake_minimum_required(VERSION 3.10)
 project(server)
 set(CMAKE_BUILD_TYPE Debug)
 link_directories(${CMAKE_SOURCE_DIR}/sqlite3/lib)
 include_directories(${CMAKE_SOURCE_DIR}/sqlite3/include)
-add_executable(main main.cpp logger.cpp thread.cpp threadpool.cpp httpparser.cpp http_parser.c sqlite3client.cpp databasehelper.cpp mysqlclient.cpp)
-target_link_libraries(main pthread sqlite3 mysqlclient)
+include_directories(/usr/include/openssl/sqlite3/include)
+find_package(OpenSSL REQUIRED)
+
+add_executable(main main.cpp logger.cpp thread.cpp threadpool.cpp httpparser.cpp http_parser.c sqlite3client.cpp databasehelper.cpp mysqlclient.cpp crypto.cpp)
+target_link_libraries(main pthread sqlite3 mysqlclient OpenSSL::SSL)

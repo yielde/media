@@ -1,0 +1,8 @@
+#include <openssl/md5.h>
+
+#include "publiclib.h"
+
+class Crypto {
+ public:
+  static Buffer MD5(const Buffer& text);
+};

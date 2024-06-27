@@ -133,7 +133,7 @@ int UrlParser::Parser() {
   target = strchr(value, ':');
   if (target != NULL) {
     m_host = Buffer(value, target);
-    m_port = Buffer(target + 1, value + value.size());
+    m_port = Buffer(target + 1, (const char*)value + value.size());
   } else
     m_host = value;
   // 解析uri
@@ -159,7 +159,7 @@ int UrlParser::Parser() {
         t = strchr(kv, '=');
         if (t == NULL) return -5;
 
-        m_values[Buffer(kv, t)] = Buffer(t + 1, kv + kv.size());
+        m_values[Buffer(kv, t)] = Buffer(t + 1, (const char*)kv + kv.size());
 
         pos = target + 1;
       }

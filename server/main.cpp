@@ -392,12 +392,16 @@ int mysql_test() {  // 使用
   return 0;
 }
 
+#include "crypto.h"
+
+int crypto_test() {
+  Buffer data = "abcdef";
+  data = Crypto::MD5(data);
+  printf("E80B5017098950FC58AAD83C8C14978E\n%s\n", (char *)data);
+  return 0;
+}
+
 int main() {
-  CProcess proclog;
-  proclog.setEntryFunction(createLogServer, &proclog);
-  proclog.CreateSubProcess();
-  sleep(1);
-  mysql_test();
-  getchar();
+  crypto_test();
   return 0;
 }
